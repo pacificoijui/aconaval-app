@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Sistema Aço Naval</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;color:#fff;
+  background:radial-gradient(900px 420px at 15% -10%,#1d5ea6 0%,transparent 60%),linear-gradient(155deg,#003a73 0%,#002147 70%)}
+.c{text-align:center;max-width:440px;padding:24px}
+img{width:96px;height:96px;border-radius:22px;background:#fff;padding:10px;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}
+h1{font-size:22px;margin:22px 0 8px}
+p{color:#BFD2EC;font-size:14.5px;line-height:1.6}
+button{margin-top:22px;font:inherit;font-weight:700;font-size:14px;border:none;border-radius:10px;padding:11px 22px;background:#D9B25B;color:#001A38;cursor:pointer}
+small{display:block;margin-top:14px;color:#8FA7C9;font-size:12px}
+.faixa{position:fixed;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,#F1D89A,#D9B25B,#B8892E)}
+</style>
+</head>
+<body>
+<div class="c">
+  <img src="icone.png" alt="Aço Naval">
+  <h1>Sem conexão com o sistema</h1>
+  <p>O computador está sem internet ou o site não respondeu. Assim que a conexão voltar, o sistema abre sozinho.</p>
+  <button id="b">Tentar de novo</button>
+  <small id="s"></small>
+</div>
+<div class="faixa"></div>
+<script>
+  const volta = new URLSearchParams(location.search).get('volta') || (window.acnApp && window.acnApp.inicio) || 'https://www.aconaval.com/sistema/';
+  const ir = () => { if (window.acnApp) window.acnApp.voltar(volta); else location.replace(volta); };
+  document.getElementById('b').onclick = ir;
+  let n = 15;
+  setInterval(() => {
+    n--;
+    if (n <= 0) { n = 15; if (navigator.onLine) ir(); }
+    document.getElementById('s').textContent = navigator.onLine ? 'Tentando de novo em ' + n + 's…' : 'Esperando a internet voltar…';
+  }, 1000);
+  window.addEventListener('online', () => setTimeout(ir, 800));
+</script>
+</body>
+</html>

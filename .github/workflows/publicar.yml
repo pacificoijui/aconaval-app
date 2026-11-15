@@ -1,0 +1,24 @@
+# Gera o instalador do Windows e publica como release — o programa instalado
+# nos computadores procura essas releases e se atualiza sozinho.
+# Para lançar uma versão nova: aumente "version" no package.json, faça o
+# commit e crie a tag igual (ex.: git tag v1.0.1 && git push --tags).
+name: Publicar programa Windows
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx electron-builder --win nsis --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

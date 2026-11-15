@@ -1,0 +1,46 @@
+{
+  "name": "sistema-aconaval",
+  "productName": "Sistema Aço Naval",
+  "version": "1.0.1",
+  "description": "Sistema Aço Naval — pedidos, orçamentos, solicitações, entregas e comissões num programa para Windows",
+  "author": "Aço Naval",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --publish never",
+    "publicar": "electron-builder --win nsis --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "6.3.9"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.aconaval.sistema",
+    "productName": "Sistema Aço Naval",
+    "artifactName": "Sistema-Aco-Naval-Setup.${ext}",
+    "copyright": "Aço Naval",
+    "files": ["main.js", "preload.js", "offline.html", "icone.png", "package.json"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sistema Aço Naval",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": [
+      { "provider": "github", "owner": "pacificoijui", "repo": "aconaval-app", "releaseType": "release" }
+    ]
+  }
+}
