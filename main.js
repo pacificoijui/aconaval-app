@@ -236,7 +236,7 @@ ipcMain.handle('voltar', (e, u) => {
 });
 
 /* ════════════ RESPOSTAS RÁPIDAS (atendimento) — ver atendimento.js ════════════ */
-require('./atendimento.js')({ app, ipcMain, daCasa, UA: (session.defaultSession && session.defaultSession.getUserAgent && session.defaultSession.getUserAgent()) || ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/' + process.versions.chrome) });
+require('./atendimento.js')({ app, ipcMain, daCasa, UA: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + process.versions.chrome + ' Safari/537.36' });
 
 /* ════════════ ARQUIVOS: PDF, bandeja dos baixados, pacote, arrasto — ver arquivos.js ════════════ */
 const ARQUIVOS = require('./arquivos.js')({ app, ipcMain, daCasa, session, janela: () => win, ICONE });

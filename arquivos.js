@@ -114,7 +114,8 @@ module.exports = function ligarArquivos({ app, ipcMain, daCasa, session, janela,
     });
   }
   app.on('session-created', ligarSessao);
-  try { ligarSessao(session.defaultSession); } catch (x) {}
+  // defaultSession só existe depois que o app está pronto (antes disso o Electron dá erro)
+  app.whenReady().then(() => { try { ligarSessao(session.defaultSession); } catch (x) {} });
 
   /* ── arquivos que o Windows entrega (dois cliques no PDF, "Abrir com") ── */
   const fila = [];
