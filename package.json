@@ -1,7 +1,7 @@
 {
   "name": "sistema-aconaval",
   "productName": "Sistema Aço Naval",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Sistema Aço Naval — pedidos, orçamentos, solicitações, entregas e comissões num programa para Windows",
   "author": "Aço Naval",
   "license": "UNLICENSED",
@@ -13,7 +13,8 @@
     "publicar": "electron-builder --win nsis --publish always"
   },
   "dependencies": {
-    "electron-updater": "6.3.9"
+    "electron-updater": "6.3.9",
+    "@ffmpeg-installer/ffmpeg": "1.1.0"
   },
   "devDependencies": {
     "electron": "33.2.1",
@@ -24,7 +25,9 @@
     "productName": "Sistema Aço Naval",
     "artifactName": "Sistema-Aco-Naval-Setup.${ext}",
     "copyright": "Aço Naval",
-    "files": ["main.js", "preload.js", "offline.html", "icone.png", "package.json"],
+    "files": ["main.js", "preload.js", "atendimento.js", "arquivos.js", "offline.html", "icone.png", "package.json"],
+    "asarUnpack": ["node_modules/@ffmpeg-installer/**"],
+    "fileAssociations": [{ "ext": "pdf", "name": "Documento PDF", "role": "Viewer", "description": "Documento PDF" }],
     "directories": { "output": "dist", "buildResources": "build" },
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],

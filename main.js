@@ -235,6 +235,12 @@ ipcMain.handle('voltar', (e, u) => {
   win.loadURL(dentro(u) ? u : INICIO).catch(() => {}); return true;
 });
 
+/* ════════════ RESPOSTAS RÁPIDAS (atendimento) — ver atendimento.js ════════════ */
+require('./atendimento.js')({ app, ipcMain, daCasa, UA: (session.defaultSession && session.defaultSession.getUserAgent && session.defaultSession.getUserAgent()) || ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/' + process.versions.chrome) });
+
+/* ════════════ ARQUIVOS: PDF, bandeja dos baixados, pacote, arrasto — ver arquivos.js ════════════ */
+const ARQUIVOS = require('./arquivos.js')({ app, ipcMain, daCasa, session, janela: () => win, ICONE });
+
 /* ════════════ ATUALIZAÇÃO AUTOMÁTICA ════════════
    Procura ao abrir e a cada 4 horas; baixa sozinho, avisa no trilho e numa
    faixa em cima. Instala ao reiniciar (botão) ou quando o programa fechar. */
@@ -274,7 +280,8 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   // clicou no atalho com o programa já aberto: traz a janela pra frente
-  app.on('second-instance', () => {
+  app.on('second-instance', (e, argv) => {
+    try { ARQUIVOS.abrirArgv(argv); } catch (x) {}
     if (!win) return;
     if (win.isMinimized()) win.restore();
     win.show(); win.focus();
@@ -284,6 +291,7 @@ if (!app.requestSingleInstanceLock()) {
     ligarPermissoes(session.fromPartition(PARTICAO));
     criarJanela();
     ligarAtualizador();
+    try { ARQUIVOS.abrirArgv(process.argv); } catch (x) {}
   });
   app.on('window-all-closed', () => app.quit());
 }
