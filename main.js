@@ -19,7 +19,7 @@
 
    Ver desktop/LEIA-ME.md.
    ════════════════════════════════════════════════════════════════════ */
-const { app, BrowserWindow, Menu, shell, ipcMain, session, screen } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, session, screen, Tray, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -177,6 +177,40 @@ function ligarPermissoes(sess) {
   sess.setPermissionCheckHandler((wc, perm, origem) => PERMITIDAS.has(perm) && dentro(origem || (wc && wc.getURL()) || ''));
 }
 
+/* ════════════ SEGUNDO PLANO, ÍCONE PERTO DO RELÓGIO E INÍCIO COM O WINDOWS ════════════ */
+const ARGS_OCULTO = process.argv.includes('--oculto');
+let sairDeVez = false, bandeja = null;
+const ARQ_PREFS = () => path.join(app.getPath('userData'), 'preferencias.json');
+function lerPrefs() { try { return JSON.parse(fs.readFileSync(ARQ_PREFS(), 'utf8')) || {}; } catch (x) { return {}; } }
+function gravarPrefs(p) { try { fs.writeFileSync(ARQ_PREFS(), JSON.stringify(p)); } catch (x) {} }
+const ITEM_LOGIN = { args: ['--oculto'] };
+function iniciaComWindows() { try { return !!app.getLoginItemSettings(ITEM_LOGIN).openAtLogin || !!app.getLoginItemSettings().openAtLogin; } catch (x) { return false; } }
+function ligarInicioComWindows(ligar) { try { app.setLoginItemSettings({ openAtLogin: !!ligar, args: ['--oculto'] }); if (!ligar) app.setLoginItemSettings({ openAtLogin: false }); return true; } catch (x) { return false; } }
+function mostrarJanela() { if (!win) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
+function criarBandeja() {
+  if (bandeja || process.platform !== 'win32') return;
+  try {
+    bandeja = new Tray(nativeImage.createFromPath(ICONE).resize({ width: 16, height: 16 }));
+    bandeja.setToolTip(NOME);
+    bandeja.setContextMenu(Menu.buildFromTemplate([
+      { label: 'Abrir o ' + NOME, click: mostrarJanela },
+      { type: 'separator' },
+      { label: 'Sair de vez', click: () => { sairDeVez = true; app.quit(); } }
+    ]));
+    bandeja.on('click', mostrarJanela);
+  } catch (x) {}
+}
+app.on('before-quit', () => { sairDeVez = true; });
+/* primeira vez: o programa já nasce abrindo com o Windows (em segundo plano) e ficando aberto ao fechar a janela */
+function padroesDaPrimeiraVez() {
+  if (!app.isPackaged) return;
+  const p = lerPrefs();
+  if (p.padroes) return;
+  p.padroes = true; if (p.segundoPlano === undefined) p.segundoPlano = true;
+  gravarPrefs(p);
+  if (!iniciaComWindows()) ligarInicioComWindows(true);
+}
+
 /* ════════════ A JANELA ════════════ */
 function criarJanela() {
   const j = lerJanela();
@@ -191,8 +225,14 @@ function criarJanela() {
     }
   });
   if (!j || j.max !== false) win.maximize();
-  win.once('ready-to-show', () => win.show());
-  win.on('close', gravarJanela);
+  // aberto pelo Windows (--oculto): fica em segundo plano, só o ícone perto do relógio; clicar nele abre a janela
+  win.once('ready-to-show', () => { if (!ARGS_OCULTO) win.show(); });
+  win.on('session-end', () => { sairDeVez = true; });                       // desligando o Windows: não segura o desligamento
+  win.on('close', (e) => {
+    gravarJanela();
+    // fechar a janela NÃO fecha o programa: ele continua em segundo plano (WhatsApp, avisos, sistema já carregado). Sair de vez: ícone perto do relógio.
+    if (!sairDeVez && process.platform === 'win32' && lerPrefs().segundoPlano !== false) { e.preventDefault(); win.hide(); }
+  });
   win.on('page-title-updated', (e, t) => { e.preventDefault(); win.setTitle(t && t.indexOf('Aço Naval') >= 0 ? t : NOME); });
 
   // sem internet (ou o site fora do ar): tela de aviso, que tenta de novo sozinha
@@ -213,12 +253,16 @@ ipcMain.on('config', (e) => { e.returnValue = { origem: ORIGEM, inicio: INICIO }
 ipcMain.handle('info', (e) => {
   if (!daCasa(e)) return null;
   let autostart = false;
-  try { autostart = !!app.getLoginItemSettings().openAtLogin; } catch (x) {}
-  return { versao: app.getVersion(), autostart, empacotado: app.isPackaged };
+  autostart = iniciaComWindows();
+  return { versao: app.getVersion(), autostart, empacotado: app.isPackaged, segundoPlano: lerPrefs().segundoPlano !== false };
 });
 ipcMain.handle('autostart', (e, ligar) => {
   if (!daCasa(e)) return false;
-  try { app.setLoginItemSettings({ openAtLogin: !!ligar }); return true; } catch (x) { return false; }
+  return ligarInicioComWindows(ligar);
+});
+ipcMain.handle('segundo-plano', (e, ligar) => {
+  if (!daCasa(e)) return false;
+  const p = lerPrefs(); p.segundoPlano = !!ligar; gravarPrefs(p); return true;
 });
 ipcMain.handle('abrir-fora', (e, u) => {
   if (!daCasa(e)) return false;
@@ -284,10 +328,12 @@ if (!app.requestSingleInstanceLock()) {
     try { ARQUIVOS.abrirArgv(argv); } catch (x) {}
     if (!win) return;
     if (win.isMinimized()) win.restore();
-    win.show(); win.focus();
+    mostrarJanela();
   });
   app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
+    padroesDaPrimeiraVez();
+    criarBandeja();
     ligarPermissoes(session.fromPartition(PARTICAO));
     criarJanela();
     ligarAtualizador();

@@ -13,6 +13,7 @@ if (daCasa) {
     inicio: cfg.inicio,
     info: () => ipcRenderer.invoke('info'),
     autostart: (ligar) => ipcRenderer.invoke('autostart', !!ligar),
+    segundoPlano: (ligar) => ipcRenderer.invoke('segundo-plano', !!ligar),
     abrirFora: (url) => ipcRenderer.invoke('abrir-fora', String(url || '')),
     voltar: (url) => ipcRenderer.invoke('voltar', String(url || '')),
     limparGuia: (id) => ipcRenderer.invoke('limpar-guia', String(id || '')),
