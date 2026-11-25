@@ -36,6 +36,12 @@ if (daCasa) {
       aoAbrirExterno: (cb) => { if (typeof cb === 'function') ipcRenderer.on('arq-abrir-externo', (e, d) => cb(d)); }
     },
     // respostas rápidas (a pasta do Google Drive é escolhida na janela do Windows; a tela nunca manda caminho)
+    // projetos do Configurador (a pasta do Google Drive é escolhida na janela do Windows; a tela nunca manda caminho)
+    projetos: {
+      info: () => ipcRenderer.invoke('projs-info'),
+      escolherPasta: () => ipcRenderer.invoke('projs-escolher-pasta'),
+      gravar: (estado) => ipcRenderer.invoke('projs-gravar', estado)
+    },
     respostas: {
       info: () => ipcRenderer.invoke('resp-info'),
       escolherPasta: () => ipcRenderer.invoke('resp-escolher-pasta'),

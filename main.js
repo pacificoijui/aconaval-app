@@ -282,6 +282,9 @@ ipcMain.handle('voltar', (e, u) => {
 /* ════════════ RESPOSTAS RÁPIDAS (atendimento) — ver atendimento.js ════════════ */
 require('./atendimento.js')({ app, ipcMain, daCasa, UA: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + process.versions.chrome + ' Safari/537.36' });
 
+/* ════════════ PROJETOS DO CONFIGURADOR numa pasta do Google Drive — ver projetos.js ════════════ */
+require('./projetos.js')({ app, ipcMain, daCasa });
+
 /* ════════════ ARQUIVOS: PDF, bandeja dos baixados, pacote, arrasto — ver arquivos.js ════════════ */
 const ARQUIVOS = require('./arquivos.js')({ app, ipcMain, daCasa, session, janela: () => win, ICONE });
 

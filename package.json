@@ -1,7 +1,7 @@
 {
   "name": "sistema-aconaval",
   "productName": "Sistema Aço Naval",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Sistema Aço Naval — pedidos, orçamentos, solicitações, entregas e comissões num programa para Windows",
   "author": "Aço Naval",
   "license": "UNLICENSED",
@@ -25,7 +25,7 @@
     "productName": "Sistema Aço Naval",
     "artifactName": "Sistema-Aco-Naval-Setup.${ext}",
     "copyright": "Aço Naval",
-    "files": ["main.js", "preload.js", "atendimento.js", "arquivos.js", "offline.html", "icone.png", "package.json"],
+    "files": ["main.js", "preload.js", "atendimento.js", "arquivos.js", "projetos.js", "offline.html", "icone.png", "package.json"],
     "asarUnpack": ["node_modules/@ffmpeg-installer/**"],
     "fileAssociations": [{ "ext": "pdf", "name": "Documento PDF", "role": "Viewer", "description": "Documento PDF" }],
     "directories": { "output": "dist", "buildResources": "build" },
