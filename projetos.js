@@ -36,20 +36,41 @@ function limpar(estado) {
     if (!p.cfg || typeof p.cfg !== 'object') return;
     let tam = 0; try { tam = JSON.stringify(p.cfg).length; } catch (e) { return; }
     if (tam > LIMITE_PROJ) return;
-    out.projetos.push({ id: String(p.id), nome: String(p.nome || '').slice(0, 120), cliente: String(p.cliente || '').slice(0, 160), ts: Number(p.ts) || 0, cfg: p.cfg });
+    out.projetos.push({ id: String(p.id), nome: String(p.nome || '').slice(0, 120), cliente: String(p.cliente || '').slice(0, 160), ts: Number(p.ts) || 0, rev: Math.max(0, Math.floor(Number(p.rev) || 0)), base: Math.max(0, Math.floor(Number(p.base) || 0)), cfg: p.cfg });
   });
   const ap = estado.apagados && typeof estado.apagados === 'object' ? estado.apagados : {};
   Object.keys(ap).slice(0, 3000).forEach(k => { if (/^[A-Za-z0-9_-]{1,40}$/.test(k) && Number(ap[k]) > 0) out.apagados[k] = Number(ap[k]); });
   return out;
 }
-/* vale o mais recente de cada projeto; apagado depois da última alteração não volta */
-function juntar(a, b) {
-  a = a || {}; b = b || {};
-  const ap = Object.assign({}, a.apagados || {});
-  Object.keys(b.apagados || {}).forEach(k => { ap[k] = Math.max(ap[k] || 0, b.apagados[k]); });
-  const m = new Map();
-  [].concat(a.projetos || [], b.projetos || []).forEach(p => { if (p && p.id) { const q = m.get(p.id); if (!q || (p.ts || 0) >= (q.ts || 0)) m.set(p.id, p); } });
-  return { tipo: 'aco-naval-projetos', v: 1, projetos: [...m.values()].filter(p => !(ap[p.id] && ap[p.id] >= (p.ts || 0))), apagados: ap, atualizadoEm: new Date().toISOString() };
+/* JUNÇÃO DOS DOIS COMPUTADORES — sem depender do relógio de cada PC e sem perder nada.
+   Cada projeto tem um contador "rev" (sobe a cada alteração) e "base" (o rev que o Drive tinha quando este computador sincronizou pela última vez).
+     • só este computador mexeu desde a última vez  → vale o daqui;
+     • só o outro mexeu                              → vale o do Drive;
+     • os DOIS mexeram (versões diferentes)          → ficam as duas: a do Drive e a daqui como "(versão deste computador)".
+   O que foi excluído de propósito fica anotado (apagados) para não "voltar". */
+const canon = (o) => JSON.stringify(o, (k, v) => (v && typeof v === 'object' && !Array.isArray(v)) ? Object.keys(v).sort().reduce((r, x) => { r[x] = v[x]; return r; }, {}) : v);
+const igual = (a, b) => a.nome === b.nome && a.cliente === b.cliente && canon(a.cfg) === canon(b.cfg);
+function juntar(disco, nova) {
+  disco = disco || {}; nova = nova || {};
+  const ap = Object.assign({}, disco.apagados || {});
+  Object.keys(nova.apagados || {}).forEach(k => { ap[k] = Math.max(ap[k] || 0, nova.apagados[k]); });
+  const m = new Map(); (disco.projetos || []).forEach(p => { if (p && p.id) m.set(p.id, Object.assign({}, p, { base: p.rev || 0 })); });
+  const extras = [];
+  (nova.projetos || []).forEach(L => {
+    if (!L || !L.id) return; const D = m.get(L.id);
+    if (!D) { m.set(L.id, Object.assign({}, L, { base: L.rev || 0 })); return; }
+    if (igual(D, L)) { D.rev = Math.max(D.rev || 0, L.rev || 0); D.base = D.rev; D.ts = Math.max(D.ts || 0, L.ts || 0); return; }
+    const dr = D.rev || 0, lr = L.rev || 0, lb = L.base || 0;
+    if (dr === 0 && lr === 0) { extras.push(L); return; }                           // projetos antigos, sem contador, e diferentes: guarda os dois
+    if (lb === dr && lr > dr) { m.set(L.id, Object.assign({}, L, { base: lr })); return; }   // só este computador mexeu
+    if (lr === lb) return;                                                        // este computador não mexeu: vale o do Drive
+    extras.push(L);                                                               // os dois mexeram: guarda as duas versões
+  });
+  extras.forEach(L => {
+    const h = require('crypto').createHash('sha1').update(canon(L.cfg) + L.nome).digest('hex').slice(0, 6), id = (L.id + 'x' + h).slice(0, 40);
+    if (!m.has(id) && ![...m.values()].some(q => igual(q, L))) m.set(id, { id, nome: ((L.nome || 'Projeto') + ' (versão de outro computador)').slice(0, 120), cliente: L.cliente, ts: L.ts, rev: 1, base: 1, cfg: L.cfg });
+  });
+  return { tipo: 'aco-naval-projetos', v: 2, projetos: [...m.values()].filter(p => !(ap[p.id] && ap[p.id] >= (p.ts || 0))), apagados: ap, atualizadoEm: new Date().toISOString() };
 }
 function lerDisco() {
   try { const p = ARQ(); if (fs.statSync(p).size > LIMITE_JSON) return null; return limpar(JSON.parse(fs.readFileSync(p, 'utf8'))); } catch (e) { return null; }
