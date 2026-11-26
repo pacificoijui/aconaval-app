@@ -55,7 +55,8 @@ function lerDisco() {
   try { const p = ARQ(); if (fs.statSync(p).size > LIMITE_JSON) return null; return limpar(JSON.parse(fs.readFileSync(p, 'utf8'))); } catch (e) { return null; }
 }
 function gravarAtomico(obj) {
-  const p = ARQ(), tmp = p + '.tmp-' + process.pid;
+  const p = ARQ(), tmp = p + '.tmp-' + process.pid, bak = path.join(path.dirname(p), 'projetos.copia-anterior.json');
+  try { if (fs.existsSync(p) && (!fs.existsSync(bak) || Date.now() - fs.statSync(bak).mtimeMs > 10 * 60 * 1000)) fs.copyFileSync(p, bak); } catch (e) {}   // cópia de segurança do arquivo anterior (a cada 10 min), para recuperar se algo der errado
   fs.writeFileSync(tmp, JSON.stringify(obj), 'utf8'); fs.renameSync(tmp, p);
 }
 
